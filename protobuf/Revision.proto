@@ -1,0 +1,12 @@
+// All data that can possiblely be revised includes a Revision message.
+//
+//
+//
+//
+
+message Revision {
+	optional int32 sequence = 1;
+	optional int32 lastEffectiveDate = 2;
+    optional bool deleted = 3;
+	optional int32 previousId = 4;
+}

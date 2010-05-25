@@ -1,0 +1,144 @@
+import "Revision.proto";
+
+// Dates:   int32, yyyymmdd
+// Prices:  int32, 2 decimal places 42,949,672.96
+// Rates:   int32, 6 decimal places 4,294.967296
+
+package symbology;
+
+message Country {
+  optional int32 id = 1;
+  optional Revision revision = 2;
+  optional string name = 3;
+  optional int32 isoNumber = 4;               // ISO 3166-1 numeric
+  optional string iso2Code = 5;               // ISO 3166-1-alpha-2 code
+  optional string iso3Code = 6;               // ISO 3166-1 alpha-3
+}
+message CountrySeries { 
+  repeated Country country = 1; 
+}
+message Currency {
+  optional int32 id = 1;
+  optional Revision revision = 2;
+  optional string name = 3;
+  optional int32 isoNumber = 4;               // ISO 4217
+  optional string isoCode = 5;
+}
+message CurrencySeries { 
+  repeated Currency currency = 1;
+}
+message Market {
+  optional int32 id = 1;
+  optional Revision revision = 2;
+  optional string name = 3;
+  optional string isoCode = 4;                // ISO 10383
+  optional Country country = 5;
+  optional string city = 6;
+  optional string website = 7;
+}
+message MarketSeries {
+  repeated Market market = 1;
+}
+message Instrument {
+  optional int32 id = 1;
+  optional Revision revision = 2;
+  optional int32 parentId = 3;
+  optional string name = 4;
+}
+message InstrumentSeries {
+  repeated Instrument instrument = 1;
+}
+message CounterParty {
+  optional int32 id = 1;
+  optional Revision revision = 2;
+  enum type {
+    ISO = 0;
+    SYNTHETIC = 1;
+    BROKER = 2;
+  } 
+  optional string name = 3;
+  optional string isoCode = 4;
+  optional string website = 5;
+}
+message CounterPartySeries {
+  repeated CounterParty counterParty = 1;
+}
+message Company {
+  optional int32 id = 1;
+  optional Revision revision = 2;
+  optional string name = 3;
+}
+message CompanySeries {
+  repeated Company company = 1;
+}
+message Security {
+  optional int32 id = 1;
+  optional Revision revision = 2;
+  optional string name = 3;
+  optional Instrument instrument = 4;
+  optional Company company = 5;
+  optional Currency currency = 6;
+  optional int32 strike = 7;
+  optional int32 expirationDate = 8;
+}
+message SecuritySeries {
+  repeated Security security = 1;
+}
+message Symbol {
+  optional int32 id = 1;
+  optional Revision revision = 2;
+  enum type {
+    CUSIP = 0;
+    ISIN = 1;
+    SEDOL = 2;
+    VENDOR = 3;
+  }
+  optional Currency currency = 3;
+  optional Security security = 4;
+  optional CounterParty counterParty = 5;
+  optional string name = 6;
+}
+message SymbolSeries {
+  repeated Symbol symbol = 1;
+}
+message ExchangeRate {
+  optional int32 id = 1;
+  optional Revision revision = 2;
+  optional Currency toCurrency = 3;
+  optional Currency fromCurrency = 4;
+  optional CounterParty counterParty = 5;
+  optional int64 time = 6;
+  optional int32 rate = 7;
+}
+message ExchangeRateSeries {
+  repeated ExchangeRate exchangeRate = 1;
+}
+message Price {
+  optional int32 id = 1;
+  optional Revision revision = 2;
+  optional Security security = 3;
+  optional CounterParty counterParty = 4;
+  optional Currency currency = 5;
+  optional int32 date = 6;
+  optional int32 bid = 7;
+  optional int32 ask = 8;
+  optional int32 open = 9;
+  optional int32 close = 10;
+  optional int32 high = 11;
+  optional int32 low = 12;
+  optional int32 volume = 13;
+  optional int32 return = 14;
+}
+message PriceSeries {
+  repeated Price price = 1;
+}
+message Event {
+  optional int32 id = 1;
+  optional Revision revision = 2;
+  // dividends - how was the dividend given?
+  // splits
+  // mergers, divistitures,
+}
+message EventSeries {
+  repeated Event event = 1;
+}

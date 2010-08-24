@@ -1,18 +1,24 @@
 import "Revision.proto";
 
+// Data representations:
 // Dates:   int32, yyyymmdd
 // Prices:  int32, 2 decimal places 42,949,672.96
 // Rates:   int32, 6 decimal places 4,294.967296
 
 package symbology;
 
+// Data Definitions
+
 message Country {
   optional int32 id = 1;
   optional Revision revision = 2;
   optional string name = 3;
-  optional int32 isoNumber = 4;               // ISO 3166-1 numeric
-  optional string iso2Code = 5;               // ISO 3166-1-alpha-2 code
-  optional string iso3Code = 6;               // ISO 3166-1 alpha-3
+  // ISO 3166-1 numeric
+  optional int32 isoNumber = 4;
+  // ISO 3166-1-alpha-2 code
+  optional string iso2Code = 5;
+  // ISO 3166-1 alpha-3
+  optional string iso3Code = 6;
 }
 message CountrySeries { 
   repeated Country country = 1; 
@@ -21,7 +27,8 @@ message Currency {
   optional int32 id = 1;
   optional Revision revision = 2;
   optional string name = 3;
-  optional int32 isoNumber = 4;               // ISO 4217
+  // ISO 4217 for number and code
+  optional int32 isoNumber = 4;
   optional string isoCode = 5;
 }
 message CurrencySeries { 
@@ -31,7 +38,8 @@ message Market {
   optional int32 id = 1;
   optional Revision revision = 2;
   optional string name = 3;
-  optional string isoCode = 4;                // ISO 10383
+  // ISO 10383
+  optional string isoCode = 4;
   optional Country country = 5;
   optional string city = 6;
   optional string website = 7;
@@ -49,16 +57,17 @@ message InstrumentSeries {
   repeated Instrument instrument = 1;
 }
 message CounterParty {
+  enum Type {
+    ISO = 1;
+    SYNTHETIC = 2;
+    BROKER = 3;
+  } 
   optional int32 id = 1;
   optional Revision revision = 2;
-  enum type {
-    ISO = 0;
-    SYNTHETIC = 1;
-    BROKER = 2;
-  } 
-  optional string name = 3;
-  optional string isoCode = 4;
-  optional string website = 5;
+  optional Type type = 3;
+  optional string name = 4;
+  optional string isoCode = 5;
+  optional string website = 6;
 }
 message CounterPartySeries {
   repeated CounterParty counterParty = 1;
@@ -85,18 +94,19 @@ message SecuritySeries {
   repeated Security security = 1;
 }
 message Symbol {
+  enum type {
+    CUSIP = 1;
+    ISIN = 2;
+    SEDOL = 3;
+    Vendor = 4;
+  }
   optional int32 id = 1;
   optional Revision revision = 2;
-  enum type {
-    CUSIP = 0;
-    ISIN = 1;
-    SEDOL = 2;
-    VENDOR = 3;
-  }
-  optional Currency currency = 3;
-  optional Security security = 4;
-  optional CounterParty counterParty = 5;
-  optional string name = 6;
+  optional Type type = 3;
+  optional Currency currency = 4;
+  optional Security security = 5;
+  optional CounterParty counterParty = 6;
+  optional string name = 7;
 }
 message SymbolSeries {
   repeated Symbol symbol = 1;
@@ -143,53 +153,71 @@ message EventSeries {
   repeated Event event = 1;
 }
 
-
-message SubscriptionRequest {
-  repeated Security security = 1;
-  repeated CounterParty counterParty = 2;
-  enum Series {
-    PRICE = 0;
-  }
-}
+// RPC Definitions
 
 // Request: SeriesRequest
-// Returns: PriceSeries or EventSeries
+// Reply: PriceSeries or EventSeries, depending on the value of 
+//   SeriesRequest.Request
+// [definition ...]
+
 message SeriesRequest {
-  optional int32 startDate = 1;     // start of data series
-  optional int32 endDate = 2;       // end of data series
-  optional int32 asOfDate = 3;      // data as it was known up to this date
-  repeated Security security = 4;   // for which securities
-  repeated CounterParty counteryParty = 5; // counter-party
-  enum Series {                     // data requested
-    OPEN_PRICE = 0;                 // time series (returns message Price)
-    CLOSE_PRICE = 1;
-    HIGH_PRICE = 2;
-    LOW_PRICE = 3;
-    VOLUME = 4;
-    OPEN_INTEREST = 5;
-    RETURN = 6;
-    DIVIDEND = 7;                   // event series (returns message Event)
-    SPLIT = 8;
+  // Request is the type of time series data being requested. It can be either
+  // a series of prices or a series of events
+  enum Request {
+    // Reply is PriceSeries
+    OpenPrice = 1;
+    ClosePrice = 2;
+    HighPrice = 3;
+    LowPrice = 4;
+    Volume = 5;
+    OpenInterest = 6;
+    Return = 7;
+    // Reply is EventSeries
+    Dividend = 8;
+    Split = 9;
   }
-  optional bool eventAdjusted = 6;  // adjust data for EVENTS
-  optional bool getRevision = 7;    // include revision history
-  optional bool getSecurityId = 8;  // return the securityId for each request
-  optional bool getDate = 9;        // return date for each request
+  // start of data series
+  optional int32 startDate = 1;
+  
+  // end of data series
+  optional int32 endDate = 2;
+  
+  // If true, all data in the series is reported as it was known at endDate 
+  // Any revisions to the data that occured after endDate are not included in 
+  // the time series.
+  optional dataAsOfEndDate = 3;
+
+  // list of Security for which we are requesting data
+  repeated Security security = 4; 
+  
+  // list of CounterParty for which we are requesting data
+  repeated CounterParty counteryParty = 5;
+  
+  // type of data requested (volume, price, etc)
+  optional Request request = 6;
+
+  // If true, adjust per-share series data for any stock splits
+  optional bool adjustForStockSplit = 7;
+  
+  optional bool includeRevision = 8;   // include revision history
+  optional bool includeSecurityId = 9; // include the securityId for each request
+  optional bool includeDate = 10;      // include date for each request
 }
 
 // Request: EntityRequest. Request either a list of Ids, or a payload
 // Returns: Response, with message corresponding to entity
 message EntityRequest {
+ enum Entity {
+    Currency = 1;
+    Country = 2;
+    Market = 3;
+    Instrument = 4;
+    CounterParty = 5;
+    Company = 6;
+    Security = 7;
+    Symbol = 8;
+  }
   repeated int32 id = 1;            // Id's requested for given Entity
   optional bytes payload = 2;
-  enum Entity {
-    CURRENCY = 0;
-    COUNTRY = 1;
-    MARKET = 2;
-    INSTRUMENT = 3;
-    COUNTER_PARTY = 4;
-    COMPANY = 5;
-    SECURITY = 6;
-    SYMBOL = 7;
-  }
+  optional Request request = 3;
 }
